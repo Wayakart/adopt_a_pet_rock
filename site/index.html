@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pet Rock — it does nothing.</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M15 75Q5 58 12 42Q15 30 25 22Q35 12 50 12Q65 10 78 18Q88 25 92 42Q96 55 88 72Q85 82 70 88Q55 92 40 90Q25 88 15 75Z' fill='%237d7874'/%3E%3Cellipse cx='38' cy='42' rx='8' ry='9' fill='white' stroke='%23404040' stroke-width='1.5'/%3E%3Ccircle cx='38' cy='42' r='4' fill='%23121212'/%3E%3Cellipse cx='62' cy='44' rx='9' ry='10' fill='white' stroke='%23404040' stroke-width='1.5'/%3E%3Ccircle cx='62' cy='44' r='4.5' fill='%23121212'/%3E%3C/svg%3E">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --sand: #e8dcc8;
+    --green: #6b8055;
+    --brown-dark: #4a3f35;
+    --brown-mid: #6b5d50;
+    --brown-light: #8a7b6b;
+    --brown-faint: #a89880;
+    --rock-light: #a8a29e;
+    --rock-mid: #7d7874;
+    --rock-dark: #5a5550;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    color: var(--brown-dark);
+    background: var(--sand);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Hero ─────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, var(--sand) 0%, var(--green) 100%);
+    position: relative;
+    padding: 2rem;
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
+    color: var(--brown-dark);
+    margin-bottom: 0.3em;
+    text-align: center;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: var(--brown-mid);
+    opacity: 0.7;
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .rock-container {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .rock-container.wobble {
+    animation: wobble 0.4s ease-out;
+  }
+
+  @keyframes wobble {
+    0%   { transform: scale(1) rotate(0deg); }
+    15%  { transform: scale(0.95) rotate(-3deg); }
+    30%  { transform: scale(0.97) rotate(2.5deg); }
+    50%  { transform: scale(0.98) rotate(-1.5deg); }
+    70%  { transform: scale(0.99) rotate(0.5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* Speech bubble */
+  .speech-bubble {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0;
+    background: white;
+    padding: 8px 18px;
+    border-radius: 18px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10;
+  }
+
+  .speech-bubble.visible {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid white;
+  }
+
+  /* ── Section styling ──────────────────────────────── */
+  section {
+    padding: 6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .section-heading {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    color: var(--brown-dark);
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  /* ── Demo / Dock Section ──────────────────────────── */
+  .demo-section {
+    background: linear-gradient(180deg, var(--green) 0%, #5a7048 50%, var(--sand) 100%);
+  }
+
+  .demo-section .section-heading {
+    color: var(--sand);
+  }
+
+  .dock-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .dock {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: rgba(30, 30, 30, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 22px;
+    padding: 8px 14px 10px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  .dock-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #666 0%, #444 100%);
+    opacity: 0.5;
+    transition: transform 0.2s;
+  }
+
+  .dock-icon:hover {
+    transform: translateY(-6px) scale(1.12);
+  }
+
+  .dock-rock-wrapper {
+    position: relative;
+    width: 52px; height: 52px;
+    transition: transform 0.2s;
+    cursor: default;
+  }
+
+  .dock-rock-wrapper:hover {
+    transform: translateY(-6px) scale(1.12);
+  }
+
+  .dock-annotation {
+    font-size: 0.75rem;
+    color: rgba(232, 220, 200, 0.6);
+    max-width: 360px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ── Name & Purchase Section ──────────────────────── */
+  .purchase-section {
+    background: var(--sand);
+    gap: 0.5rem;
+  }
+
+  .name-input {
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+    border: 2px solid var(--brown-faint);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.5);
+    color: var(--brown-dark);
+    text-align: center;
+    width: 260px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .name-input::placeholder {
+    color: var(--brown-light);
+    opacity: 0.6;
+  }
+
+  .name-input:focus {
+    border-color: var(--brown-mid);
+    box-shadow: 0 0 0 3px rgba(107, 93, 80, 0.15);
+  }
+
+  .adopt-btn {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 50px;
+    background: var(--brown-dark);
+    color: var(--sand);
+    cursor: pointer;
+    margin-top: 1.5rem;
+    transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(74, 63, 53, 0.3);
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .adopt-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(74, 63, 53, 0.4);
+    background: #3d342b;
+  }
+
+  .adopt-btn:active {
+    transform: translateY(0);
+  }
+
+  .adopt-btn.adopted {
+    background: var(--green);
+    color: white;
+    cursor: default;
+  }
+
+  .fine-print {
+    font-size: 0.7rem;
+    color: var(--brown-light);
+    opacity: 0.6;
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .confirmation {
+    font-size: 1rem;
+    color: var(--brown-dark);
+    margin-top: 1.2rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s, transform 0.5s;
+    text-align: center;
+  }
+
+  .confirmation.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Footer ───────────────────────────────────────── */
+  footer {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--brown-dark);
+    color: var(--sand);
+  }
+
+  footer p {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    line-height: 2;
+  }
+
+  /* ── Responsive ───────────────────────────────────── */
+  @media (max-width: 600px) {
+    .hero { padding: 2rem 1rem; }
+    section { padding: 4rem 1rem; }
+    .dock { gap: 6px; padding: 6px 10px 8px; }
+    .dock-icon, .dock-rock-wrapper { width: 42px; height: 42px; }
+    .dock-icon { border-radius: 10px; }
+    .name-input { width: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="hero">
+  <h1 class="hero-title">PET ROCK</h1>
+  <p class="hero-subtitle">it does nothing.</p>
+
+  <div class="rock-container" id="heroRock" onclick="handleRockClick(this)">
+    <div class="speech-bubble" id="heroBubble"></div>
+    <svg id="heroRockSvg" viewBox="0 0 320 260" width="320" height="260" style="filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25)); overflow: visible;">
+      <defs>
+        <radialGradient id="rockGrad" cx="40%" cy="35%" r="60%">
+          <stop offset="0%"   stop-color="#a8a29e"/>
+          <stop offset="50%"  stop-color="#7d7874"/>
+          <stop offset="100%" stop-color="#5a5550"/>
+        </radialGradient>
+      </defs>
+      <!-- Rock body -->
+      <path id="heroRockPath" fill="url(#rockGrad)" />
+      <!-- Left eye -->
+      <g class="googly-eye" data-cx="0.40" data-cy="0.42" data-ew="20" data-eh="22" data-pr="10">
+        <ellipse class="eye-white" fill="white" stroke="#404040" stroke-width="1.5"/>
+        <circle class="eye-pupil" fill="#121212"/>
+        <circle class="eye-glint" fill="white" opacity="0.85"/>
+      </g>
+      <!-- Right eye -->
+      <g class="googly-eye" data-cx="0.60" data-cy="0.44" data-ew="22" data-eh="24" data-pr="11">
+        <ellipse class="eye-white" fill="white" stroke="#404040" stroke-width="1.5"/>
+        <circle class="eye-pupil" fill="#121212"/>
+        <circle class="eye-glint" fill="white" opacity="0.85"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══ DEMO ═══ -->
+<section class="demo-section" id="demo">
+  <h2 class="section-heading">it lives in your dock.</h2>
+  <div class="dock-wrapper">
+    <div class="dock" id="dock">
+      <div class="dock-icon"></div>
+      <div class="dock-icon"></div>
+      <div class="dock-icon"></div>
+      <div class="dock-rock-wrapper">
+        <svg id="dockRockSvg" viewBox="0 0 52 52" width="52" height="52" style="overflow: visible;">
+          <defs>
+            <radialGradient id="dockRockGrad" cx="40%" cy="35%" r="60%">
+              <stop offset="0%"   stop-color="#a8a29e"/>
+              <stop offset="50%"  stop-color="#7d7874"/>
+              <stop offset="100%" stop-color="#5a5550"/>
+            </radialGradient>
+          </defs>
+          <path id="dockRockPath" fill="url(#dockRockGrad)" />
+          <!-- Left eye -->
+          <g class="googly-eye" data-cx="0.40" data-cy="0.42" data-ew="3.2" data-eh="3.5" data-pr="1.6">
+            <ellipse class="eye-white" fill="white" stroke="#404040" stroke-width="0.4"/>
+            <circle class="eye-pupil" fill="#121212"/>
+            <circle class="eye-glint" fill="white" opacity="0.85"/>
+          </g>
+          <!-- Right eye -->
+          <g class="googly-eye" data-cx="0.60" data-cy="0.44" data-ew="3.5" data-eh="3.8" data-pr="1.8">
+            <ellipse class="eye-white" fill="white" stroke="#404040" stroke-width="0.4"/>
+            <circle class="eye-pupil" fill="#121212"/>
+            <circle class="eye-glint" fill="white" opacity="0.85"/>
+          </g>
+        </svg>
+      </div>
+      <div class="dock-icon"></div>
+      <div class="dock-icon"></div>
+    </div>
+    <p class="dock-annotation">eyes follow your cursor. that's it. that's the app.</p>
+  </div>
+</section>
+
+<!-- ═══ PURCHASE ═══ -->
+<section class="purchase-section" id="purchase">
+  <a class="adopt-btn" href="https://github.com/Wayakart/adopt_a_pet_rock/releases/latest/download/PetRock.dmg">adopt a rock</a>
+  <p class="fine-print">macOS 14+ &middot; no features &middot; no updates &middot; no refunds</p>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p>features: none &middot; updates: never &middot; purpose: unclear</p>
+  <p>right-click &rarr; Open on first launch</p>
+</footer>
+
+<script>
+// ── Rock Shape Path ──────────────────────────────────
+function rockPathD(w, h) {
+  function p(xr, yr) { return `${(xr * w).toFixed(2)} ${(yr * h).toFixed(2)}`; }
+  return [
+    `M ${p(0.15, 0.75)}`,
+    `Q ${p(0.05, 0.58)} ${p(0.12, 0.42)}`,
+    `Q ${p(0.15, 0.30)} ${p(0.25, 0.22)}`,
+    `Q ${p(0.35, 0.12)} ${p(0.50, 0.12)}`,
+    `Q ${p(0.65, 0.10)} ${p(0.78, 0.18)}`,
+    `Q ${p(0.88, 0.25)} ${p(0.92, 0.42)}`,
+    `Q ${p(0.96, 0.55)} ${p(0.88, 0.72)}`,
+    `Q ${p(0.85, 0.82)} ${p(0.70, 0.88)}`,
+    `Q ${p(0.55, 0.92)} ${p(0.40, 0.90)}`,
+    `Q ${p(0.25, 0.88)} ${p(0.15, 0.75)}`,
+    'Z'
+  ].join(' ');
+}
+
+// Set rock paths
+document.getElementById('heroRockPath').setAttribute('d', rockPathD(320, 260));
+document.getElementById('dockRockPath').setAttribute('d', rockPathD(52, 52));
+
+// ── Googly Eyes System ───────────────────────────────
+const allEyeGroups = [];
+
+function initEyes() {
+  document.querySelectorAll('.googly-eye').forEach(g => {
+    const svg = g.closest('svg');
+    const vb = svg.viewBox.baseVal;
+    const w = vb.width, h = vb.height;
+    const cx = parseFloat(g.dataset.cx) * w;
+    const cy = parseFloat(g.dataset.cy) * h;
+    const ew = parseFloat(g.dataset.ew);
+    const eh = parseFloat(g.dataset.eh);
+    const pr = parseFloat(g.dataset.pr);
+
+    const sclera = g.querySelector('.eye-white');
+    const pupil = g.querySelector('.eye-pupil');
+    const glint = g.querySelector('.eye-glint');
+
+    sclera.setAttribute('cx', cx);
+    sclera.setAttribute('cy', cy);
+    sclera.setAttribute('rx', ew);
+    sclera.setAttribute('ry', eh);
+
+    pupil.setAttribute('cx', cx);
+    pupil.setAttribute('cy', cy);
+    pupil.setAttribute('r', pr);
+
+    const gr = pr * 0.28;
+    glint.setAttribute('cx', cx + pr * 0.2);
+    glint.setAttribute('cy', cy - pr * 0.2);
+    glint.setAttribute('r', gr);
+
+    allEyeGroups.push({
+      svg, cx, cy, ew, eh, pr, pupil, glint,
+      // spring state
+      currentX: 0, currentY: 0,
+      velocityX: 0, velocityY: 0,
+      targetX: 0, targetY: 0,
+    });
+  });
+}
+
+// ── Mouse Tracking ───────────────────────────────────
+let mouseX = 0, mouseY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 0) {
+    mouseX = e.touches[0].clientX;
+    mouseY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+// ── Animation Loop ───────────────────────────────────
+function animate() {
+  const springK = 0.12;
+  const damping = 0.6;
+
+  allEyeGroups.forEach(eye => {
+    const rect = eye.svg.getBoundingClientRect();
+    const vb = eye.svg.viewBox.baseVal;
+    const scaleX = vb.width / rect.width;
+    const scaleY = vb.height / rect.height;
+
+    // Mouse position in SVG coordinates
+    const svgMouseX = (mouseX - rect.left) * scaleX;
+    const svgMouseY = (mouseY - rect.top) * scaleY;
+
+    const dx = svgMouseX - eye.cx;
+    const dy = svgMouseY - eye.cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    const maxOff = eye.pr * 0.45;
+    const norm = Math.min(dist / (vb.width * 0.6), 1.0);
+
+    if (dist > 0.5) {
+      eye.targetX = (dx / dist) * maxOff * norm;
+      eye.targetY = (dy / dist) * maxOff * norm;
+    }
+
+    // Spring physics
+    const ax = (eye.targetX - eye.currentX) * springK;
+    const ay = (eye.targetY - eye.currentY) * springK;
+    eye.velocityX = (eye.velocityX + ax) * damping;
+    eye.velocityY = (eye.velocityY + ay) * damping;
+    eye.currentX += eye.velocityX;
+    eye.currentY += eye.velocityY;
+
+    eye.pupil.setAttribute('cx', eye.cx + eye.currentX);
+    eye.pupil.setAttribute('cy', eye.cy + eye.currentY);
+
+    const gr = eye.pr * 0.28;
+    eye.glint.setAttribute('cx', eye.cx + eye.currentX + eye.pr * 0.2);
+    eye.glint.setAttribute('cy', eye.cy + eye.currentY - eye.pr * 0.2);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+initEyes();
+requestAnimationFrame(animate);
+
+// ── Rock Click / Rejection ───────────────────────────
+const rejections = [
+  "no.", "no", "nope", "nah", "absolutely not", "hard pass",
+  "denied", "lol no", "nein", "non", "\u3044\u3044\u3048", "niet",
+  "why", "stop", "don\u2019t", "leave me alone", "i\u2019m a rock",
+  "go away", "no thanks", "pass", "negative", "nuh uh",
+  "not happening", "try again never", "rocks don\u2019t do that",
+  "i literally cannot", "that\u2019s not my job", "i have no hands",
+  "read the job description", "i\u2019m on break", "did i stutter",
+  "\uD83E\uDEA8", "...", "bruh", "respectfully, no", "unsubscribe",
+  "per my last no", "as per my previous rejection",
+  "i don\u2019t have the bandwidth", "let me circle back to no"
+];
+
+let bubbleTimeout = null;
+
+function handleRockClick(container) {
+  // Wobble
+  container.classList.remove('wobble');
+  void container.offsetWidth; // force reflow
+  container.classList.add('wobble');
+
+  // Speech bubble
+  const bubble = document.getElementById('heroBubble');
+  bubble.textContent = rejections[Math.floor(Math.random() * rejections.length)];
+  bubble.classList.add('visible');
+
+  clearTimeout(bubbleTimeout);
+  bubbleTimeout = setTimeout(() => {
+    bubble.classList.remove('visible');
+  }, 2200);
+}
+
+
+</script>
+</body>
+</html>
