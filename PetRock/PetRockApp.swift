@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 @main
 struct PetRockApp: App {
@@ -147,6 +148,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var rockName: String?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Register as login item (auto-start on boot)
+        if #available(macOS 13.0, *) {
+            try? SMAppService.mainApp.register()
+        }
+
         // Load saved name
         rockName = UserDefaults.standard.string(forKey: "rockName")
 
@@ -256,7 +262,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: NSColor(red: 0.95, green: 0.92, blue: 0.87, alpha: 1.0)
+            .foregroundColor: NSColor(red: 0.20, green: 0.17, blue: 0.14, alpha: 1.0)
         ]
         let attrStr = NSAttributedString(string: displayName, attributes: attributes)
         let textSize = attrStr.size()
