@@ -138,6 +138,48 @@ class RockPreviewNSView: NSView {
     }
 }
 
+// MARK: - Settings View
+
+struct SettingsView: View {
+    @State private var eyeSpeed: Double
+    var onChange: (Double) -> Void
+
+    init(currentSpeed: Double, onChange: @escaping (Double) -> Void) {
+        _eyeSpeed = State(initialValue: currentSpeed)
+        self.onChange = onChange
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("settings")
+                .font(.system(.title2, design: .monospaced))
+                .foregroundColor(Color(red: 0.35, green: 0.30, blue: 0.25))
+
+            VStack(spacing: 8) {
+                Text("eye speed")
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundColor(Color(red: 0.45, green: 0.40, blue: 0.35))
+
+                HStack(spacing: 12) {
+                    Text("lazy")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(Color(red: 0.55, green: 0.50, blue: 0.45))
+                    Slider(value: $eyeSpeed, in: 0.2...3.0, step: 0.1)
+                        .onChange(of: eyeSpeed) { _, val in
+                            onChange(val)
+                        }
+                    Text("frantic")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundColor(Color(red: 0.55, green: 0.50, blue: 0.45))
+                }
+            }
+        }
+        .padding(24)
+        .frame(width: 280, height: 140)
+        .background(Color(red: 0.96, green: 0.93, blue: 0.88))
+    }
+}
+
 // MARK: - App Delegate
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -145,7 +187,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let s: CGFloat = 256
     var lastMouse: CGPoint = .zero
     var namingWindow: NSWindow?
+    var settingsWindow: NSWindow?
     var rockName: String?
+    var eyeSpeed: Double = 1.0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Register as login item (auto-start on boot)
@@ -153,14 +197,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try? SMAppService.mainApp.register()
         }
 
-        // Load saved name
+        // Load saved settings
         rockName = UserDefaults.standard.string(forKey: "rockName")
+        let saved = UserDefaults.standard.double(forKey: "eyeSpeed")
+        eyeSpeed = saved > 0 ? saved : 1.0
 
         if rockName == nil {
             showNamingWindow()
         } else {
             startIconTimer()
         }
+    }
+
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        let menu = NSMenu()
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ""))
+        return menu
+    }
+
+    @objc func showSettings() {
+        if let existing = settingsWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let view = SettingsView(currentSpeed: eyeSpeed) { [weak self] val in
+            self?.eyeSpeed = val
+            UserDefaults.standard.set(val, forKey: "eyeSpeed")
+        }
+
+        let hostingView = NSHostingView(rootView: view)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 280, height: 140),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentView = hostingView
+        window.center()
+        window.title = "Pet Rock"
+        window.isReleasedWhenClosed = false
+        window.backgroundColor = NSColor(red: 0.96, green: 0.93, blue: 0.88, alpha: 1)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
     }
 
     func showNamingWindow() {
@@ -218,8 +299,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let dx = mouse.x - screen.midX
         let dy = mouse.y - 40
         let dist = sqrt(dx * dx + dy * dy)
-        let maxOff: CGFloat = s * 0.045
-        let norm = min(dist / 300, 1.0)
+        let maxOff: CGFloat = s * 0.045 * CGFloat(eyeSpeed)
+        let norm = min(dist / (300 / CGFloat(eyeSpeed)), 1.0)
 
         var pdx: CGFloat = 0
         var pdy: CGFloat = 0
